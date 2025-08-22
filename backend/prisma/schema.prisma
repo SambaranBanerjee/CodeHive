@@ -1,0 +1,86 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  username  String    @unique
+  email     String    @unique
+  password  String
+  avatarUrl String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  teams     TeamMember[]
+  projects  Project[] @relation("OwnedProjects")
+  ownedTeams Team[]   @relation("TeamOwners")
+  messages  Message[]
+}
+
+model Team {
+  id        Int          @id @default(autoincrement())
+  name      String
+  ownerId   Int
+  owner     User         @relation("TeamOwners", fields: [ownerId], references: [id])
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  members   TeamMember[]
+  projects  Project[]
+  messages  Message[]
+}
+
+model TeamMember {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  teamId    Int
+  role      String   // "OWNER" | "ADMIN" | "MEMBER"
+  joinedAt  DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  team      Team     @relation(fields: [teamId], references: [id])
+
+  @@unique([userId, teamId])
+}
+
+model Project {
+  id        Int       @id @default(autoincrement())
+  name      String
+  description String?
+  ownerId   Int
+  teamId    Int?
+
+  owner     User      @relation("OwnedProjects", fields: [ownerId], references: [id])
+  team      Team?     @relation(fields: [teamId], references: [id])
+
+  files     ProjectFile[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model ProjectFile {
+  id        Int       @id @default(autoincrement())
+  projectId Int
+  name      String
+  content   String    @default("")
+  updatedAt DateTime  @updatedAt
+
+  project   Project   @relation(fields: [projectId], references: [id])
+}
+
+model Message {
+  id        Int       @id @default(autoincrement())
+  content   String
+  createdAt DateTime  @default(now())
+  userId    Int
+  teamId    Int?
+
+  user      User      @relation(fields: [userId], references: [id])
+  team      Team?     @relation(fields: [teamId], references: [id])
+}
