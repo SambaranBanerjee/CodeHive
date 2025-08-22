@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import compass from "../assets/compass-1299559_640.png";
+import compass from "@/assets/compass-1299559_640.png"
 
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
