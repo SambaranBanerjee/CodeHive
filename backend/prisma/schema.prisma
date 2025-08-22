@@ -8,6 +8,30 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  BLOCKED
+}
+
+model Friendship {
+  // The user who sent the request
+  requesterId Int
+  // The user who received the request
+  receiverId  Int
+
+  status      FriendshipStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  requester   User             @relation("sentFriendRequests", fields: [requesterId], references: [id])
+  receiver    User             @relation("receivedFriendRequests", fields: [receiverId], references: [id])
+
+  // Ensures a user can only send one request to another
+  @@id([requesterId, receiverId])
+}
+
 model User {
   id        Int       @id @default(autoincrement())
   username  String    @unique
@@ -17,10 +41,14 @@ model User {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  teams     TeamMember[]
-  projects  Project[] @relation("OwnedProjects")
-  ownedTeams Team[]   @relation("TeamOwners")
-  messages  Message[]
+  teams      TeamMember[]
+  projects   Project[]   @relation("OwnedProjects")
+  ownedTeams Team[]      @relation("TeamOwners")
+  messages   Message[]
+
+  // New friendship relations
+  sentFriendRequests     Friendship[] @relation("sentFriendRequests")
+  receivedFriendRequests Friendship[] @relation("receivedFriendRequests")
 }
 
 model Team {

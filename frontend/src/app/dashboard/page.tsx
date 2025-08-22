@@ -5,25 +5,28 @@ import Image from "next/image";
 import compass from "@/assets/compass-1299559_640.png";
 import { RocketLaunchIcon, UserGroupIcon, BellIcon, ChevronDoubleLeftIcon } from "@heroicons/react/24/outline";
 
-// New: Mock data for friends and requests
-const mockFriends = [
-  { id: 1, name: "Alice", avatar: "A" },
-  { id: 2, name: "Bob", avatar: "B" },
-  { id: 3, name: "Charlie", avatar: "C" },
-];
-
-const mockRequests = [
-  { id: 4, name: "David", avatar: "D" },
-  { id: 5, name: "Eve", avatar: "E" },
-];
-
-
 // =================================================================
-// New: FriendsSidebar Component
+// FriendsSidebar Component (Updated)
 // =================================================================
 function FriendsSidebar() {
   const [activeTab, setActiveTab] = useState<'friends' | 'requests'>('friends');
   const [isFriendsSidebarOpen, setIsFriendsSidebarOpen] = useState(true);
+
+  type Friend = {
+    id: number;
+    name: string;
+    avatar: string;
+  };
+
+  type FriendRequest = {
+    id: number;
+    name: string;
+    avatar: string;
+  };
+
+  // 1) Removed demo values and replaced them with empty state
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [requests, setRequests] = useState<FriendRequest[]>([]);
 
   if (!isFriendsSidebarOpen) {
     return (
@@ -43,66 +46,64 @@ function FriendsSidebar() {
     <div className="flex flex-col bg-[#181818] w-64 border-l border-gray-700 h-screen">
       {/* Header with Tabs */}
       <div className="flex p-2 border-b border-gray-700">
-        <button
-          onClick={() => setActiveTab('friends')}
-          className={`flex-1 flex items-center justify-center p-2 rounded-md gap-x-2 ${activeTab === 'friends' ? 'bg-gray-700' : 'hover:bg-gray-900'}`}
-        >
+        <button onClick={() => setActiveTab('friends')} className={`flex-1 flex items-center justify-center p-2 rounded-md gap-x-2 ${activeTab === 'friends' ? 'bg-gray-700' : 'hover:bg-gray-900'}`}>
           <UserGroupIcon className="h-5 w-5" />
           <span>Friends</span>
         </button>
-        <button
-          onClick={() => setActiveTab('requests')}
-          className={`flex-1 flex items-center justify-center p-2 rounded-md gap-x-2 ${activeTab === 'requests' ? 'bg-gray-700' : 'hover:bg-gray-900'}`}
-        >
+        <button onClick={() => setActiveTab('requests')} className={`flex-1 flex items-center justify-center p-2 rounded-md gap-x-2 ${activeTab === 'requests' ? 'bg-gray-700' : 'hover:bg-gray-900'}`}>
           <BellIcon className="h-5 w-5" />
           <span>Requests</span>
-           {mockRequests.length > 0 && <span className="bg-red-500 text-xs rounded-full h-4 w-4 flex items-center justify-center">{mockRequests.length}</span>}
+           {requests.length > 0 && <span className="bg-red-500 text-xs rounded-full h-4 w-4 flex items-center justify-center">{requests.length}</span>}
         </button>
       </div>
 
-       {/* Close Button */}
-       <button
-          onClick={() => setIsFriendsSidebarOpen(false)}
-          className="absolute top-2 right-2 text-gray-500 hover:text-white"
-          title="Close Friends"
-        >
+       <button onClick={() => setIsFriendsSidebarOpen(false)} className="absolute top-2 right-2 text-gray-500 hover:text-white" title="Close Friends">
          <ChevronDoubleLeftIcon className="h-5 w-5" />
-        </button>
+       </button>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
         {activeTab === 'friends' ? (
           <div className="space-y-4">
-            <h3 className="font-semibold text-gray-400">Friends ({mockFriends.length})</h3>
-            {mockFriends.map(friend => (
-              <div key={friend.id} className="flex items-center gap-x-3">
-                <div className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-500 text-sm">{friend.avatar}</div>
-                <span>{friend.name}</span>
-              </div>
-            ))}
+            <h3 className="font-semibold text-gray-400">Friends ({friends.length})</h3>
+            {/* 2) Text for when no friends are present */}
+            {friends.length === 0 ? (
+                <p className="text-center text-sm text-gray-500 pt-4">Your friends list is empty. Find some friends!</p>
+            ) : (
+                friends.map(friend => (
+                  <div key={friend.id} className="flex items-center gap-x-3">
+                    <div className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-500 text-sm">{friend.avatar}</div>
+                    <span>{friend.name}</span>
+                  </div>
+                ))
+            )}
           </div>
         ) : (
           <div className="space-y-4">
-             <h3 className="font-semibold text-gray-400">Requests ({mockRequests.length})</h3>
-            {mockRequests.map(req => (
-              <div key={req.id} className="flex items-center justify-between">
-                 <div className="flex items-center gap-x-3">
-                    <div className="w-8 h-8 flex items-center justify-center rounded-full bg-purple-500 text-sm">{req.avatar}</div>
-                    <span>{req.name}</span>
-                </div>
-                <div className="flex gap-x-2">
-                    <button className="text-green-500 hover:text-green-400 text-xs">Accept</button>
-                    <button className="text-red-500 hover:text-red-400 text-xs">Decline</button>
-                </div>
-              </div>
-            ))}
+             <h3 className="font-semibold text-gray-400">Requests ({requests.length})</h3>
+              {/* 2) Text for when no requests are present */}
+             {requests.length === 0 ? (
+                <p className="text-center text-sm text-gray-500 pt-4">You have no pending friend requests.</p>
+             ) : (
+                requests.map(req => (
+                  <div key={req.id} className="flex items-center justify-between">
+                     <div className="flex items-center gap-x-3">
+                        <div className="w-8 h-8 flex items-center justify-center rounded-full bg-purple-500 text-sm">{req.avatar}</div>
+                        <span>{req.name}</span>
+                    </div>
+                    <div className="flex gap-x-2">
+                        <button className="text-green-500 hover:text-green-400 text-xs">Accept</button>
+                        <button className="text-red-500 hover:text-red-400 text-xs">Decline</button>
+                    </div>
+                  </div>
+                ))
+             )}
           </div>
         )}
       </div>
     </div>
   );
 }
-
 
 // =================================================================
 // Main Home Component (Updated)
@@ -123,17 +124,43 @@ export default function Home() {
   return (
     <div className="flex bg-[#101010] text-white min-h-screen">
       {/* Project Sidebar (Left) */}
-      <div className="relative flex flex-col items-center bg-[#181818] shadow-lg border-r border-gray-700 w-20 overflow-hidden">
-        <div className="flex flex-col items-center space-y-4 py-4 w-full">
-          <button className="w-12 h-12 flex items-center justify-center rounded-full border-2 border-green-500 hover:bg-gray-600 cursor-pointer" title="Discover">
+      <div className="relative flex flex-col items-center bg-[#181818] shadow-lg border-r border-gray-700 w-20 pt-4">
+        {/* Using a wrapper div with `group` allows for the tooltip */}
+        <div className="group relative mb-4">
+          {/* 3 & 4) Removed green border and updated icon styles */}
+          <button className="w-12 h-12 flex items-center justify-center bg-gray-700 rounded-2xl hover:rounded-xl hover:bg-green-600 transition-all duration-200 ease-linear cursor-pointer">
             <Image src={compass} alt="Discover" width={24} height={24} />
           </button>
-          <button onClick={() => setIsModalOpen(true)} className="w-12 h-12 flex items-center justify-center rounded-full border-2 border-green-500 hover:bg-gray-600 cursor-pointer" title="Create / Join">+</button>
+          {/* 6) Tooltip for Discover */}
+          <span className="absolute left-full ml-4 top-1/2 -translate-y-1/2 bg-black text-white px-3 py-1.5 rounded-md text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            Discover Projects
+          </span>
         </div>
-        <div className="flex flex-col space-y-4 w-full px-2 mt-4">
+        
+        <div className="group relative mb-4">
+          <button onClick={() => setIsModalOpen(true)} className="w-12 h-12 flex items-center justify-center bg-gray-700 rounded-2xl hover:rounded-xl hover:bg-green-600 transition-all duration-200 ease-linear cursor-pointer">
+            <span className="text-2xl text-green-400">+</span>
+          </button>
+          {/* 6) Tooltip for Add */}
+          <span className="absolute left-full ml-4 top-1/2 -translate-y-1/2 bg-black text-white px-3 py-1.5 rounded-md text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            Add a New Project
+          </span>
+        </div>
+
+        <div className="w-8 border-b-2 border-gray-700 mb-4"></div>
+
+        <div className="flex flex-col space-y-2 w-full items-center px-2">
           {projects.map((project, idx) => (
-            <div key={idx} onClick={() => setSelectedProject(project)} className={`flex items-center justify-center cursor-pointer p-2 rounded-md transition-colors duration-200 ${selectedProject === project ? 'bg-green-600' : 'hover:bg-gray-700'}`} title={project}>
-              <div className="w-12 h-12 flex items-center justify-center rounded-full bg-gray-700">{project[0].toUpperCase()}</div>
+            <div key={idx} className="group relative">
+              <div onClick={() => setSelectedProject(project)} 
+                   className={`w-12 h-12 flex items-center justify-center cursor-pointer bg-gray-700 rounded-2xl hover:rounded-xl transition-all duration-200 ease-linear ${selectedProject === project ? 'ring-2 ring-white rounded-xl' : ''}`}
+              >
+                  {project[0].toUpperCase()}
+              </div>
+              {/* 5) Tooltip for Project Name */}
+              <span className="absolute left-full ml-4 top-1/2 -translate-y-1/2 bg-black text-white px-3 py-1.5 rounded-md text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                {project}
+              </span>
             </div>
           ))}
         </div>
@@ -158,7 +185,7 @@ export default function Home() {
         )}
       </main>
 
-       {/* New: Friends Sidebar (Right) */}
+       {/* Friends Sidebar (Right) */}
        <FriendsSidebar />
 
       {/* Modal */}
