@@ -33,22 +33,62 @@ model Friendship {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  username  String    @unique
-  email     String    @unique
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  email     String   @unique
   password  String
   avatarUrl String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  teams      TeamMember[]
-  projects   Project[]   @relation("OwnedProjects")
-  ownedTeams Team[]      @relation("TeamOwners")
-  messages   Message[]
-
-  // New friendship relations
+  teams                  TeamMember[]
+  ownedProjects          Project[]    @relation("OwnedProjects")
+  ownedTeams             Team[]       @relation("TeamOwners")
+  messages               Message[]
   sentFriendRequests     Friendship[] @relation("sentFriendRequests")
   receivedFriendRequests Friendship[] @relation("receivedFriendRequests")
+
+  createdBranches        Branch[] // Relation to branches created by the user
+}
+
+model Branch {
+  id        Int      @id @default(autoincrement())
+  name      String   // e.g., "main", "feature-ui"
+  isMain    Boolean  @default(false)
+  
+  projectId Int
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  authorId  Int      // User who created the branch
+  author    User     @relation(fields: [authorId], references: [id])
+
+  nodes     FileNode[] // The root nodes of the file tree for this branch
+
+  createdAt DateTime @default(now())
+  @@unique([projectId, name]) // A branch name must be unique within a project
+}
+
+enum NodeType {
+  FILE
+  FOLDER
+}
+
+model FileNode {
+  id        Int       @id @default(autoincrement())
+  name      String
+  type      NodeType
+  content   String?   // Content is for files; null for folders
+  
+  branchId  Int
+  branch    Branch    @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  
+  // This creates the folder/file hierarchy
+  parentId  Int?
+  parent    FileNode? @relation("FolderChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children  FileNode[] @relation("FolderChildren")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Team {
@@ -78,18 +118,24 @@ model TeamMember {
 }
 
 model Project {
-  id        Int       @id @default(autoincrement())
-  name      String
+  id          Int      @id @default(autoincrement())
+  name        String
   description String?
-  ownerId   Int
-  teamId    Int?
+  isPrivate   Boolean  @default(false)
 
-  owner     User      @relation("OwnedProjects", fields: [ownerId], references: [id])
-  team      Team?     @relation(fields: [teamId], references: [id])
+  ownerId     Int
+  teamId      Int?
 
-  files     ProjectFile[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  owner       User     @relation("OwnedProjects", fields: [ownerId], references: [id])
+  team        Team?    @relation(fields: [teamId], references: [id])
+  
+  branches    Branch[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // ❗️ REMOVE THIS LINE
+  // ProjectFile ProjectFile[] 
 }
 
 model ProjectFile {
@@ -98,8 +144,6 @@ model ProjectFile {
   name      String
   content   String    @default("")
   updatedAt DateTime  @updatedAt
-
-  project   Project   @relation(fields: [projectId], references: [id])
 }
 
 model Message {
