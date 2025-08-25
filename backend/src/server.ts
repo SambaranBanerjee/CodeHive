@@ -7,12 +7,15 @@ import authRoutes from "./modules/auth/auth.routes";
 import { errorHandler } from "./middlewares/errorHandler";
 import { registerSocketHandlers } from "./socket";
 import teamRoutes from "./modules/auth/teams/team.routes";
+import projectRoutes from './modules/projects/projects.routes';
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3000'
+}));
 app.use(express.json());
 
 // Health check
@@ -22,7 +25,9 @@ app.get("/api/health", (req, res) => {
 
 // REST APIs
 app.use("/api/auth", authRoutes);
+app.use('/api/projects', projectRoutes);
 app.use("/api/teams", teamRoutes);
+
 
 // WebSocket
 registerSocketHandlers(io);
