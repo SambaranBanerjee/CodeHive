@@ -3,10 +3,12 @@
 import { useState,useEffect } from "react";
 import Image from "next/image";
 import compass from "@/assets/compass-1299559_640.png";
-import { 
-    RocketLaunchIcon, UserGroupIcon, BellIcon, ChevronDoubleLeftIcon, HashtagIcon, VideoCameraIcon, PlusIcon, FolderIcon
+import {
+  RocketLaunchIcon, UserGroupIcon, BellIcon, ChevronDoubleLeftIcon, HashtagIcon, VideoCameraIcon, PlusIcon, FolderIcon, HomeIcon, UserPlusIcon, PaperAirplaneIcon, Cog6ToothIcon
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
+// We need to import the new API functions
+import { getProjects, createProject, createFolder } from "@/api/api";
 // To simulate navigation, we'd use this hook from Next.js
 // import { useRouter } from 'next/navigation';
 
@@ -124,164 +126,164 @@ function CreateProjectModal({ onClose, onCreate }: { onClose: () => void; onCrea
   );
 }
 
-function CreateFolderModal({ 
-    onClose, 
-    onCreate,
-    targetType
+function CreateFolderModal({
+  onClose,
+  onCreate,
+  targetType
 }: {
-    onClose: () => void;
-    onCreate: (folderName: string) => void;
-    targetType: 'Main' | 'Branch';
+  onClose: () => void;
+  onCreate: (folderName: string) => void;
+  targetType: 'Main' | 'Branch';
 }) {
-    const [folderName, setFolderName] = useState('');
+  const [folderName, setFolderName] = useState('');
 
-    const handleCreate = () => {
-        if (!folderName.trim()) return;
-        onCreate(folderName.trim());
-    };
+  const handleCreate = () => {
+    if (!folderName.trim()) return;
+    onCreate(folderName.trim());
+  };
 
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-            <div className="bg-[#181818] p-6 rounded-lg shadow-lg w-96 text-white">
-                <h2 className="text-xl font-bold mb-4">Create New {targetType} Folder</h2>
-                <div>
-                    <label className="text-sm font-semibold text-gray-300 mb-2 block">FOLDER NAME</label>
-                    <input 
-                        type="text" 
-                        value={folderName}
-                        onChange={(e) => setFolderName(e.target.value)}
-                        placeholder="e.g. feature-new-login" 
-                        className="w-full px-3 py-2 rounded-md border border-gray-700 bg-[#101010] placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500" 
-                    />
-                </div>
-                <div className="mt-6 flex justify-end items-center gap-x-3">
-                    <button onClick={onClose} className="text-gray-400 hover:text-white px-4 py-2 rounded-md hover:bg-gray-700">Cancel</button>
-                    <button onClick={handleCreate} className="bg-green-600 px-4 py-2 rounded-md hover:bg-green-700 transition-colors">Create Folder</button>
-                </div>
-            </div>
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+      <div className="bg-[#181818] p-6 rounded-lg shadow-lg w-96 text-white">
+        <h2 className="text-xl font-bold mb-4">Create New {targetType} Folder</h2>
+        <div>
+          <label className="text-sm font-semibold text-gray-300 mb-2 block">FOLDER NAME</label>
+          <input
+            type="text"
+            value={folderName}
+            onChange={(e) => setFolderName(e.target.value)}
+            placeholder="e.g. feature-new-login"
+            className="w-full px-3 py-2 rounded-md border border-gray-700 bg-[#101010] placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
         </div>
-    );
+        <div className="mt-6 flex justify-end items-center gap-x-3">
+          <button onClick={onClose} className="text-gray-400 hover:text-white px-4 py-2 rounded-md hover:bg-gray-700">Cancel</button>
+          <button onClick={handleCreate} className="bg-green-600 px-4 py-2 rounded-md hover:bg-green-700 transition-colors">Create Folder</button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // =================================================================
 // ProjectChannelList Component (Updated & Safer)
 // =================================================================
-function ProjectChannelList({ 
-    project,
-    onAddFolder,
-    activeFolderPath,
-    setActiveFolderPath
-}: { 
-    project: Project;
-    onAddFolder: (target: 'main' | 'branch') => void;
-    activeFolderPath: string | null;
-    setActiveFolderPath: (path: string) => void;
+function ProjectChannelList({
+  project,
+  onAddFolder,
+  activeFolderPath,
+  setActiveFolderPath
+}: {
+  project: Project;
+  onAddFolder: (target: 'main' | 'branch') => void;
+  activeFolderPath: string | null;
+  setActiveFolderPath: (path: string) => void;
 }) {
-    const [openCategories, setOpenCategories] = useState({ main: true, branch: true, text: true, video: true });
+  const [openCategories, setOpenCategories] = useState({ main: true, branch: true, text: true, video: true });
 
-    const toggleCategory = (category: 'main' | 'branch' | 'text' | 'video') => {
-        setOpenCategories(prev => ({ ...prev, [category]: !prev[category] }));
-    };
+  const toggleCategory = (category: 'main' | 'branch' | 'text' | 'video') => {
+    setOpenCategories(prev => ({ ...prev, [category]: !prev[category] }));
+  };
 
-    const FolderLink = ({ name, branchName }: { name: string, branchName: string }) => {
-        // Construct a unique path for the folder to track its active state
-        const folderPath = `${branchName}/${name}`;
-        const isActive = activeFolderPath === folderPath;
-
-        return (
-            <Link 
-                href={`/project/${project.id}/${branchName}/${name}`} 
-                passHref
-            >
-                <div 
-                    onClick={() => setActiveFolderPath(folderPath)}
-                    className={`flex items-center gap-x-2 text-gray-400 p-2 rounded-md cursor-pointer 
-                                ${isActive ? 'bg-green-600/50 text-white' : 'hover:text-white hover:bg-gray-700/50'}`}
-                >
-                    <FolderIcon className="h-5 w-5" />
-                    <span>{name}</span>
-                </div>
-            </Link>
-        );
-    };
-
-    const ChannelLink = ({ channel, type }: { channel: TextOrVideoChannel, type: 'text' | 'video' }) => {
-        const Icon = type === 'text' ? HashtagIcon : VideoCameraIcon;
-        return (
-            <a href="#" className="flex items-center gap-x-2 text-gray-400 hover:text-white hover:bg-gray-700/50 p-2 rounded-md">
-                <Icon className="h-5 w-5" />
-                <span>{channel.name}</span>
-            </a>
-        );
-    };
+  const FolderLink = ({ name, branchName }: { name: string, branchName: string }) => {
+    // Construct a unique path for the folder to track its active state
+    const folderPath = `${branchName}/${name}`;
+    const isActive = activeFolderPath === folderPath;
 
     return (
-        <div className="w-60 bg-[#141414] flex-shrink-0 border-r border-gray-700 flex flex-col">
-            <div className="p-4 border-b border-gray-700 shadow-md">
-                <h2 className="font-bold text-lg truncate">{project.name}</h2>
-            </div>
-            <div className="flex-1 overflow-y-auto p-2 space-y-4">
-                {/* PROJECT CODE (MAIN) */}
-                <div>
-                    <button onClick={() => toggleCategory('main')} className="flex items-center justify-between w-full text-sm text-gray-400 hover:text-white font-semibold">
-                        <span>PROJECT CODE (MAIN)</span>
-                        <div onClick={(e) => {e.stopPropagation(); onAddFolder('main');}} className="hover:bg-gray-600 rounded p-0.5"><PlusIcon className="h-4 w-4" /></div>
-                    </button>
-                    {openCategories.main && (
-                        <div className="mt-2 space-y-1 pl-2">
-                            {(project.mainCodeFolders || []).map(name => <FolderLink key={name} name={name} branchName="main"/>)}
-                        </div>
-                    )}
-                </div>
-                {/* PROJECT CODE (BRANCHES) */}
-                <div>
-                    <button onClick={() => toggleCategory('branch')} className="flex items-center justify-between w-full text-sm text-gray-400 hover:text-white font-semibold">
-                        <span>PROJECT CODE (BRANCHES)</span>
-                        <div 
-                        onClick={
-                          (e) => {e.stopPropagation(); onAddFolder('branch');
-                        }} 
-                        className="hover:bg-gray-600 rounded p-0.5"
-                        >
-                          <PlusIcon className="h-4 w-4" />
-                        </div>
-                    </button>
-                    {openCategories.branch && (
-                        <div className="mt-2 space-y-1 pl-2">
-                            {(project.branchCodeFolders || []).map(name => <FolderLink key={name} name={name} branchName={name}/>)}
-                        </div>
-                    )}
-                </div>
-                {/* TEXT CHATS */}
-                <div>
-                    <button onClick={() => toggleCategory('text')} className="flex items-center justify-between w-full text-sm text-gray-400 hover:text-white font-semibold">
-                        <span>TEXT CHATS</span>
-                        <div className="hover:bg-gray-600 rounded p-0.5"><PlusIcon className="h-4 w-4" /></div>
-                    </button>
-                    {openCategories.text && (
-                        <div className="mt-2 space-y-1 pl-2">
-                            {(project.textChannels || []).map(c => <ChannelLink key={c.id} channel={c} type="text"/>)}
-                        </div>
-                    )}
-                </div>
-                {/* VIDEO SESSIONS */}
-                 <div>
-                    <button onClick={() => toggleCategory('video')} className="flex items-center justify-between w-full text-sm text-gray-400 hover:text-white font-semibold">
-                        <span>VIDEO SESSIONS</span>
-                        <div className="hover:bg-gray-600 rounded p-0.5"><PlusIcon className="h-4 w-4" /></div>
-                    </button>
-                    {openCategories.video && (
-                        <div className="mt-2 space-y-1 pl-2">
-                            {(project.videoChannels || []).map(c => <ChannelLink key={c.id} channel={c} type="video"/>)}
-                        </div>
-                    )}
-                </div>
-            </div>
+      <Link
+        href={`/project/${project.id}/${branchName}/${name}`}
+        passHref
+      >
+        <div
+          onClick={() => setActiveFolderPath(folderPath)}
+          className={`flex items-center gap-x-2 text-gray-400 p-2 rounded-md cursor-pointer
+                    ${isActive ? 'bg-green-600/50 text-white' : 'hover:text-white hover:bg-gray-700/50'}`}
+        >
+          <FolderIcon className="h-5 w-5" />
+          <span>{name}</span>
         </div>
+      </Link>
     );
+  };
+
+  const ChannelLink = ({ channel, type }: { channel: TextOrVideoChannel, type: 'text' | 'video' }) => {
+    const Icon = type === 'text' ? HashtagIcon : VideoCameraIcon;
+    return (
+      <a href="#" className="flex items-center gap-x-2 text-gray-400 hover:text-white hover:bg-gray-700/50 p-2 rounded-md">
+        <Icon className="h-5 w-5" />
+        <span>{channel.name}</span>
+      </a>
+    );
+  };
+
+  return (
+    <div className="w-60 bg-[#141414] flex-shrink-0 border-r border-gray-700 flex flex-col">
+      <div className="p-4 border-b border-gray-700 shadow-md">
+        <h2 className="font-bold text-lg truncate">{project.name}</h2>
+      </div>
+      <div className="flex-1 overflow-y-auto p-2 space-y-4">
+        {/* PROJECT CODE (MAIN) */}
+        <div>
+          <button onClick={() => toggleCategory('main')} className="flex items-center justify-between w-full text-sm text-gray-400 hover:text-white font-semibold">
+            <span>PROJECT CODE (MAIN)</span>
+            <div onClick={(e) => {e.stopPropagation(); onAddFolder('main');}} className="hover:bg-gray-600 rounded p-0.5"><PlusIcon className="h-4 w-4" /></div>
+          </button>
+          {openCategories.main && (
+            <div className="mt-2 space-y-1 pl-2">
+              {(project.mainCodeFolders || []).map(name => <FolderLink key={name} name={name} branchName="main"/>)}
+            </div>
+          )}
+        </div>
+        {/* PROJECT CODE (BRANCHES) */}
+        <div>
+          <button onClick={() => toggleCategory('branch')} className="flex items-center justify-between w-full text-sm text-gray-400 hover:text-white font-semibold">
+            <span>PROJECT CODE (BRANCHES)</span>
+            <div
+            onClick={
+              (e) => {e.stopPropagation(); onAddFolder('branch');
+            }}
+            className="hover:bg-gray-600 rounded p-0.5"
+            >
+              <PlusIcon className="h-4 w-4" />
+            </div>
+          </button>
+          {openCategories.branch && (
+            <div className="mt-2 space-y-1 pl-2">
+              {(project.branchCodeFolders || []).map(name => <FolderLink key={name} name={name} branchName={name}/>)}
+            </div>
+          )}
+        </div>
+        {/* TEXT CHATS */}
+        <div>
+          <button onClick={() => toggleCategory('text')} className="flex items-center justify-between w-full text-sm text-gray-400 hover:text-white font-semibold">
+            <span>TEXT CHATS</span>
+            <div className="hover:bg-gray-600 rounded p-0.5"><PlusIcon className="h-4 w-4" /></div>
+          </button>
+          {openCategories.text && (
+            <div className="mt-2 space-y-1 pl-2">
+              {(project.textChannels || []).map(c => <ChannelLink key={c.id} channel={c} type="text"/>)}
+            </div>
+          )}
+        </div>
+        {/* VIDEO SESSIONS */}
+          <div>
+            <button onClick={() => toggleCategory('video')} className="flex items-center justify-between w-full text-sm text-gray-400 hover:text-white font-semibold">
+              <span>VIDEO SESSIONS</span>
+              <div className="hover:bg-gray-600 rounded p-0.5"><PlusIcon className="h-4 w-4" /></div>
+            </button>
+            {openCategories.video && (
+              <div className="mt-2 space-y-1 pl-2">
+                {(project.videoChannels || []).map(c => <ChannelLink key={c.id} channel={c} type="video"/>)}
+              </div>
+            )}
+          </div>
+      </div>
+    </div>
+  );
 }
 
-/*function ProjectContentArea({ project }: { project: Project }) {
+function ProjectContentArea({ project }: { project: Project }) {
     const selectedChannelName = "general";
     return (
         <div className="flex-1 flex flex-col bg-[#101010]">
@@ -291,16 +293,41 @@ function ProjectChannelList({
             </header>
             <main className="flex-1 flex flex-col justify-center items-center p-6">
                  <div className="text-left max-w-lg">
-                    <h1 className="text-4xl font-bold mb-2">Welcome to #{selectedChannelName}!</h1>
-                    <p className="text-gray-400 mb-8">This is the beginning of the #{selectedChannelName} channel. Here are some things you can do to get started:</p>
+                    <h1 className="text-4xl font-bold mb-2">Welcome to {project.name}!</h1>
+                    <p className="text-gray-400 mb-8">This is your project&apos;s main workspace. Here are some steps to help you get started:</p>
                     <div className="space-y-3">
-                        <a href="#" className="flex items-center gap-x-4 p-3 bg-[#181818] rounded-md border border-gray-700 hover:border-gray-500"><UserPlusIcon className="h-6 w-6 text-green-400"/><div><h4 className="font-semibold">Invite your friends</h4><p className="text-sm text-gray-400">Get the party started by adding teammates.</p></div></a>
-                        <a href="#" className="flex items-center gap-x-4 p-3 bg-[#181818] rounded-md border border-gray-700 hover:border-gray-500"><PaperAirplaneIcon className="h-6 w-6 text-green-400"/><div><h4 className="font-semibold">Send your first message</h4><p className="text-sm text-gray-400">Say hello to the rest of the team.</p></div></a>
-                        <a href="#" className="flex items-center gap-x-4 p-3 bg-[#181818] rounded-md border border-gray-700 hover:border-gray-500"><Cog6ToothIcon className="h-6 w-6 text-green-400"/><div><h4 className="font-semibold">Configure your project</h4><p className="text-sm text-gray-400">Update settings and roles.</p></div></a>
+                        <a href="#" className="flex items-center gap-x-4 p-3 bg-[#181818] rounded-md border border-gray-700 hover:border-gray-500">
+                          <UserPlusIcon className="h-6 w-6 text-green-400"/>
+                          <div>
+                            <h4 className="font-semibold">Invite your collaborators</h4>
+                            <p className="text-sm text-gray-400">Get the team started by adding teammates to this project.</p>
+                          </div>
+                        </a>
+                        <a href="#" className="flex items-center gap-x-4 p-3 bg-[#181818] rounded-md border border-gray-700 hover:border-gray-500">
+                          <PaperAirplaneIcon className="h-6 w-6 text-green-400"/>
+                          <div>
+                            <h4 className="font-semibold">Send your first message</h4>
+                            <p className="text-sm text-gray-400">Say hello to the rest of the team in the general channel.</p>
+                          </div>
+                        </a>
+                        <a href="#" className="flex items-center gap-x-4 p-3 bg-[#181818] rounded-md border border-gray-700 hover:border-gray-500">
+                          <Cog6ToothIcon className="h-6 w-6 text-green-400"/>
+                          <div>
+                            <h4 className="font-semibold">Configure your project</h4>
+                            <p className="text-sm text-gray-400">Update settings, branches, and user roles.</p>
+                          </div>
+                        </a>
+                        <a href="#" className="flex items-center gap-x-4 p-3 bg-[#181818] rounded-md border border-gray-700 hover:border-gray-500">
+                          <FolderIcon className="h-6 w-6 text-green-400"/>
+                          <div>
+                            <h4 className="font-semibold">Create your first folder</h4>
+                            <p className="text-sm text-gray-400">Organize your code files into main or branch folders.</p>
+                          </div>
+                        </a>
                     </div>
-                 </div>
+                </div>
             </main>
-             <footer className="px-4 pb-4">
+            <footer className="px-4 pb-4">
                 <div className="bg-[#181818] rounded-lg p-2 flex items-center border border-gray-700">
                     <button className="p-2 text-gray-400 hover:text-white"><PlusIcon className="h-6 w-6"/></button>
                     <input type="text" placeholder={`Message #${selectedChannelName}`} className="flex-1 bg-transparent px-2 text-white placeholder-gray-500 focus:outline-none" />
@@ -308,7 +335,8 @@ function ProjectChannelList({
             </footer>
         </div>
     );
-}*/
+}
+
 
 export default function Home() {
   const [modalView, setModalView] = useState<'closed' | 'initial' | 'create'>('closed');
@@ -316,139 +344,72 @@ export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [activeFolderPath, setActiveFolderPath] = useState<string | null>(null);
-  
-  // const router = useRouter();
+
+  // Use the API function to fetch projects
   useEffect(() => {
-    const fetchProjects = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        // Handle case where user is not logged in
-        console.log("No auth token found, user is not logged in.");
-        return;
-      }
-
+    const fetchAllProjects = async () => {
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-        const response = await fetch(`${backendUrl}/api/projects`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch projects');
-        }
-
-        const existingProjects = await response.json();
+        const existingProjects = await getProjects();
         setProjects(existingProjects);
       } catch (error) {
         console.error("Error fetching projects:", error);
       }
     };
-
-    fetchProjects();
+    fetchAllProjects();
   }, []); // The empty dependency array [] ensures this runs only once
 
-  
-
   const handleCreateProject = async (projectData: Omit<Project, 'id' | 'mainCodeFolders' | 'branchCodeFolders' | 'textChannels' | 'videoChannels'>) => {
-    
-    // This function will now call your backend API
     try {
-        const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${backendUrl}/api/projects`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-             },
-            body: JSON.stringify(projectData),
-        });
+      // Use the API function to create the project
+      const newProjectWithTeam = await createProject(projectData);
 
-        if (!response.ok) {
-            throw new Error('Failed to create project');
-        }
-
-        const newProjectWithTeam = await response.json();
-
-        // Add the fully-formed project object from the server to the state
-        setProjects(prev => [...prev, newProjectWithTeam]);
-        setSelectedProject(newProjectWithTeam);
-        setModalView('closed');
+      setProjects(prev => [...prev, newProjectWithTeam]);
+      setSelectedProject(newProjectWithTeam);
+      setModalView('closed');
 
     } catch (error) {
-        console.error("Project creation failed:", error);
-        // Here you could show an error message to the user
+      console.error("Project creation failed:", error);
+      // Here you could show an error message to the user
     }
   };
 
   const handleOpenFolderModal = (target: 'main' | 'branch') => {
-      setFolderModal({ isOpen: true, target: target });
+    setFolderModal({ isOpen: true, target: target });
   };
 
   const handleCreateFolder = async (folderName: string) => {
     if (!selectedProject || !folderModal.target) return;
     try {
-        const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-        // Make sure you're using the same key you used when saving the token on login
-        const token = localStorage.getItem('token'); 
-
-        const response = await fetch(`${backendUrl}/api/projects/${selectedProject.id}/folders`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                folderName: folderName,
-                targetType: folderModal.target // 'main' or 'branch'
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to create folder on the backend');
-        }
-
-        // ✅ Get updated project from backend
-        const updatedProject = await response.json();
-
-        // Replace old project with updated one
-        setProjects(prev =>
-          prev.map(p => p.id === updatedProject.id ? updatedProject : p)
-        );
-        setSelectedProject(updatedProject);
-        
-        // If the backend is successful, then update the local state
-        const updatedProjects = projects.map(p => {
-            if (p.id === selectedProject.id) {
-                const updatedProject = { ...p };
-                if (folderModal.target === 'main') {
-                    // Ensure the array exists before pushing
-                    const mainFolders = updatedProject.mainCodeFolders || [];
-                    updatedProject.mainCodeFolders = [...mainFolders, folderName];
-                } else {
-                    const branchFolders = updatedProject.branchCodeFolders || [];
-                    updatedProject.branchCodeFolders = [...branchFolders, folderName];
-                }
-                return updatedProject;
-            }
-            return p;
-        });
-
-        setProjects(updatedProjects);
-        setSelectedProject(updatedProjects.find(p => p.id === selectedProject.id) || null);
-        
-        setFolderModal({ isOpen: false, target: null });
-        
+      const updatedProject = await createFolder(selectedProject.id, {
+        folderName: folderName,
+        targetType: folderModal.target
+      });
+      // Replace old project with updated one
+      setProjects(prev =>
+        prev.map(p => p.id === updatedProject.id ? updatedProject : p)
+      );
+      setSelectedProject(updatedProject);
+      setActiveFolderPath(`${folderModal.target}/${folderName}`);
+      setFolderModal({ isOpen: false, target: null });
     } catch (error) {
-        console.error("Folder creation failed:", error);
-        // You could show an error message to the user here
+      console.error("Folder creation failed:", error);
+      // You could show an error message to the user here
     }
   };
+
   return (
     <div className="flex bg-[#101010] text-white min-h-screen">
       <div className="relative flex flex-col items-center bg-[#181818] shadow-lg border-r border-gray-700 w-20 pt-4">
+        {/* New Home Button */}
+        <div className="group relative mb-4">
+          <Link href="/dashboard">
+            <button className="w-12 h-12 flex items-center justify-center bg-gray-700 rounded-2xl hover:rounded-xl hover:bg-green-600 transition-all duration-200 ease-linear cursor-pointer">
+              <HomeIcon className="h-6 w-6 text-white" />
+            </button>
+          </Link>
+          <span className="absolute left-full z-10 ml-4 top-1/2 -translate-y-1/2 bg-black text-white px-3 py-1.5 rounded-md text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Home</span>
+        </div>
+        <div className="w-8 border-b-2 border-gray-700 mb-4"></div>
         <div className="group relative mb-4">
           <button className="w-12 h-12 flex items-center justify-center bg-gray-700 rounded-2xl hover:rounded-xl hover:bg-green-600 transition-all duration-200 ease-linear cursor-pointer"><Image src={compass} alt="Discover" width={24} height={24} /></button>
           <span className="absolute left-full z-10 ml-4 top-1/2 -translate-y-1/2 bg-black text-white px-3 py-1.5 rounded-md text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Discover Projects</span>
@@ -471,15 +432,16 @@ export default function Home() {
       </div>
 
       {selectedProject ? (
-            <div className="flex flex-1">
-                <ProjectChannelList 
-                    project={selectedProject} 
-                    onAddFolder={handleOpenFolderModal}
-                    // ✅ PASS THE NEW PROPS
-                    activeFolderPath={activeFolderPath}
-                    setActiveFolderPath={setActiveFolderPath}
-                />
-            </div>
+          <div className="flex flex-1">
+            <ProjectChannelList
+              project={selectedProject}
+              onAddFolder={handleOpenFolderModal}
+              // ✅ PASS THE NEW PROPS
+              activeFolderPath={activeFolderPath}
+              setActiveFolderPath={setActiveFolderPath}
+            />
+            <ProjectContentArea project={selectedProject} />
+          </div>
       ) : (
         <main className="flex-1 p-6 flex flex-col items-center justify-center">
             <div className="text-center flex flex-col items-center gap-y-6">
@@ -495,9 +457,9 @@ export default function Home() {
 
       {modalView === 'initial' && <InitialProjectModal onClose={() => setModalView('closed')} onNavigateToCreate={() => setModalView('create')} />}
       {modalView === 'create' && <CreateProjectModal onClose={() => setModalView('closed')} onCreate={handleCreateProject} />}
-      
+
       {folderModal.isOpen && (
-        <CreateFolderModal 
+        <CreateFolderModal
             onClose={() => setFolderModal({ isOpen: false, target: null })}
             onCreate={handleCreateFolder}
             targetType={folderModal.target === 'main' ? 'Main' : 'Branch'}
