@@ -145,13 +145,8 @@ export default function SignupPage() {
     setError("");
 
     try {
-      // Try the most common endpoint patterns
       const endpoints = [
-        "/auth/signup",
-        "/api/auth/signup",
-        "/api/users/signup",
-        "/users/signup",
-        "/signup"
+        "/api/auth/signup"
       ];
       
       let lastError = null;

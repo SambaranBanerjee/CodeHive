@@ -422,7 +422,7 @@ export default function SigninPage() {
       <div className="w-full md:w-1/3 bg-white z-10 flex flex-col justify-center px-8 py-10">
         <div className="flex items-center justify-center mb-6">
           <FaRocket className="text-green-600 text-4xl mr-2" />
-          <h1 className="text-3xl font-bold text-black">CodeCollab</h1>
+          <h1 className="text-3xl font-bold text-black">CodeHive</h1>
         </div>
         
         <h2 className="text-2xl font-bold mb-6 text-black text-center">Welcome Back</h2>
