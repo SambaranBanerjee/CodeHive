@@ -4,7 +4,7 @@ import { useState,useEffect } from "react";
 import Image from "next/image";
 import compass from "@/assets/compass-1299559_640.png";
 import {
-  RocketLaunchIcon, UserGroupIcon, BellIcon, ChevronDoubleLeftIcon, HashtagIcon, VideoCameraIcon, PlusIcon, FolderIcon, HomeIcon, UserPlusIcon, PaperAirplaneIcon, Cog6ToothIcon, CodeBracketIcon
+   UserGroupIcon, BellIcon, ChevronDoubleLeftIcon, HashtagIcon, VideoCameraIcon, PlusIcon, FolderIcon, HomeIcon, UserPlusIcon, PaperAirplaneIcon, Cog6ToothIcon, CodeBracketIcon
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 // We need to import the new API functions
