@@ -9,8 +9,7 @@
     "skipLibCheck": true,                    
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,               
-    "types": ["node"],                       
-    "moduleResolution": "node10",              
+    "types": ["node"],                                
     "allowJs": false,                        
     "noImplicitAny": true                    
   },
