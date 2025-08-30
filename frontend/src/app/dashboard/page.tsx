@@ -4,7 +4,7 @@ import { useState,useEffect } from "react";
 import Image from "next/image";
 import compass from "@/assets/compass-1299559_640.png";
 import {
-  RocketLaunchIcon, UserGroupIcon, BellIcon, ChevronDoubleLeftIcon, HashtagIcon, VideoCameraIcon, PlusIcon, FolderIcon, HomeIcon, UserPlusIcon, PaperAirplaneIcon, Cog6ToothIcon
+  RocketLaunchIcon, UserGroupIcon, BellIcon, ChevronDoubleLeftIcon, HashtagIcon, VideoCameraIcon, PlusIcon, FolderIcon, HomeIcon, UserPlusIcon, PaperAirplaneIcon, Cog6ToothIcon, CodeBracketIcon
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 // We need to import the new API functions
@@ -337,6 +337,45 @@ function ProjectContentArea({ project }: { project: Project }) {
     );
 }
 
+function DashboardContent() {
+  return (
+    <div className="flex-1 flex flex-col bg-[#101010] p-6">
+      <header className="flex items-center h-12 px-4 border-b border-gray-700 shadow-sm flex-shrink-0">
+        <h3 className="font-semibold ml-2">Home</h3>
+      </header>
+      <main className="flex-1 flex flex-col justify-center items-center">
+        <div className="text-center max-w-lg mx-auto">
+          <h1 className="text-4xl font-bold mb-2">Welcome to your dashboard!</h1>
+          <p className="text-gray-400 mb-8">This is your personal workspace. Here are some steps to help you get started.</p>
+          <div className="space-y-4">
+            <div className="flex items-center gap-x-4 p-4 bg-[#181818] rounded-md border border-gray-700 hover:border-gray-500 cursor-pointer">
+              <UserPlusIcon className="h-6 w-6 text-green-400"/>
+              <div>
+                <h4 className="font-semibold">Invite your friends</h4>
+                <p className="text-sm text-gray-400">Collaborate with others on your next project.</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-x-4 p-4 bg-[#181818] rounded-md border border-gray-700 hover:border-gray-500 cursor-pointer">
+              <CodeBracketIcon className="h-6 w-6 text-green-400"/>
+              <div>
+                <h4 className="font-semibold">Create your new project</h4>
+                <p className="text-sm text-gray-400">Get started on your new software or feature.</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-x-4 p-4 bg-[#181818] rounded-md border border-gray-700 hover:border-gray-500 cursor-pointer">
+              <FolderIcon className="h-6 w-6 text-green-400"/>
+              <div>
+                <h4 className="font-semibold">Explore file organization</h4>
+                <p className="text-sm text-gray-400">Organize your projects and files into folders.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
 
 export default function Home() {
   const [modalView, setModalView] = useState<'closed' | 'initial' | 'create'>('closed');
@@ -443,14 +482,7 @@ export default function Home() {
             <ProjectContentArea project={selectedProject} />
           </div>
       ) : (
-        <main className="flex-1 p-6 flex flex-col items-center justify-center">
-            <div className="text-center flex flex-col items-center gap-y-6">
-                <RocketLaunchIcon className="h-24 w-24 text-gray-500" />
-                <h1 className="text-3xl font-bold text-gray-200">Welcome to Your Workspace</h1>
-                <p className="text-gray-400 max-w-md">Create or select a project to get started.</p>
-                <button onClick={() => setModalView('initial')} className="mt-4 bg-green-600 px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors duration-200">Create Your First Project</button>
-            </div>
-        </main>
+        <DashboardContent />
       )}
 
       <FriendsSidebar />
