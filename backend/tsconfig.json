@@ -10,7 +10,7 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,               
     "types": ["node"],                       
-    "moduleResolution": "node",              
+    "moduleResolution": "node10",              
     "allowJs": false,                        
     "noImplicitAny": true                    
   },

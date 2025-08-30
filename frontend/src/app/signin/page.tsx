@@ -134,16 +134,7 @@ export default function SigninPage() {
     try {
       // Try the most common endpoint patterns
       const endpoints = [
-        "/auth/signin",
-        "/auth/login",
-        "/api/auth/signin",
-        "/api/auth/login",
-        "/api/users/signin",
-        "/api/users/login",
-        "/users/signin",
-        "/users/login",
-        "/signin",
-        "/login"
+        "/api/auth/login"
       ];
       
       let lastError = null;
