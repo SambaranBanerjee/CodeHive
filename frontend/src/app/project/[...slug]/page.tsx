@@ -1,35 +1,109 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { use } from "react";
-import { HashtagIcon, PlusIcon, CodeBracketIcon, PlayIcon, FolderIcon } from "@heroicons/react/24/outline";
+import { useRef, useState, useEffect } from "react";
+import { HashtagIcon, PlusIcon, CodeBracketIcon } from "@heroicons/react/24/outline";
+import { UploadIcon } from "lucide-react";
 
 // This component will get the URL parameters as props
-export default function ProjectFilePage({ params }: { params: Promise<{ slug: string[] }> }) {
-  // The 'slug' will be an array of the URL parts, e.g., ['5', 'main', 'src']
-  const [projectId, branchName, ...folderPathParts] = use(params).slug;
-  const folderPath = folderPathParts.join('/');
-  
-  // In a real app, you would fetch these from an API
-  const project = { name: "CodeHive", owner: "YourName" };
-  const files = [
-    { name: "README.md", lastCommit: "Initial commit", age: "3 weeks ago", icon: <CodeBracketIcon className="h-4 w-4 text-gray-400" /> },
-    { name: ".vscode", lastCommit: "Added settings", age: "last week", icon: <FolderIcon className="h-4 w-4 text-gray-400" /> },
-    { name: "backend", lastCommit: "Fixed auth bug", age: "5 days ago", icon: <FolderIcon className="h-4 w-4 text-gray-400" /> },
-    { name: "frontend", lastCommit: "Design updates", age: "2 days ago", icon: <FolderIcon className="h-4 w-4 text-gray-400" /> },
-  ];
+export default function ProjectFilePage({ params }: { params: { slug: string[] } }) {
+  const { slug } = params;
 
-  const hasReadme = files.some(file => file.name === 'README.md');
-  const readmeContent = `# CodeHive Project
-  
-  Welcome to your project's home page!
-  
-  This is your central hub for code collaboration and file management. You can use the buttons above to **create new files** or **upload existing ones** from your local system.
-  
-  ### Getting Started
-  
-  1.  **Create a Folder:** Organize your code into logical directories.
-  2.  **Invite Collaborators:** Share this project with your team to start working together.
-  3.  **Start Coding:** Dive into your files and build something amazing!
-  `;
+  const [projectId, branchName, ...folderPathParts] = slug;
+  const folderPath = folderPathParts.join("/");
+
+  const project = { name: "CodeHive", owner: "YourName" };
+
+  type FileItem = {
+    name: string;
+    lastCommit?: string;
+    age?: string;
+  };
+
+  const [files, setFiles] = useState<FileItem[]>([]);
+  const [readmeContent, setReadmeContent] = useState("");
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const fetchFiles = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/projects/${projectId}/files`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const data = await response.json();
+      setFiles(data.files);
+    } catch (error) {
+      console.error("Failed to fetch files:", error);
+    }
+  };
+
+  const renderFiles = (items: any[], level = 0) => {
+    return items.map((item, index) => (
+      <div key={index} style={{ paddingLeft: level * 16 }} className="py-1">
+        {item.type === "folder" ? (
+          <div className="font-semibold text-blue-400">
+            📁 {item.name}
+            {renderFiles(item.children, level + 1)}
+          </div>
+        ) : (
+          <div className="text-gray-300">
+            📄 {item.name} <span className="text-xs">({item.size} bytes)</span>
+          </div>
+        )}
+      </div>
+    ));
+  };
+
+
+  useEffect(() => {
+    fetchFiles();
+  }, [projectId, branchName, folderPath]);
+
+  const handleUploadFolder = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = e.target.files;
+    if (!selectedFiles || selectedFiles.length === 0) return;
+
+    const formData = new FormData();
+    for (const file of Array.from(selectedFiles)) {
+      formData.append("files", file, ((file as File).webkitRelativePath || file.name));
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("No auth token found");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/projects/${projectId}/upload-folder`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to upload folder");
+
+      console.log("✅ Folder uploaded successfully!");
+      fetchFiles();
+    } catch (error) {
+      console.error("Folder upload failed:", error);
+    }
+
+    e.target.value = "";
+  };
+
+  const handleUploadButtonClick = () => {
+    fileInputRef.current?.click();
+  };
 
   return (
     <div className="flex-1 flex flex-col bg-[#101010] text-white">
@@ -37,58 +111,53 @@ export default function ProjectFilePage({ params }: { params: Promise<{ slug: st
       <header className="flex items-center h-12 px-4 border-b border-gray-700 shadow-sm flex-shrink-0">
         <HashtagIcon className="h-6 w-6 text-gray-500" />
         <h3 className="font-semibold ml-2">
-          {/* Display the current folder path */}
           {project.name} / {folderPath || branchName}
         </h3>
       </header>
 
       {/* Main Content Area */}
       <main className="flex-1 p-6 overflow-y-auto">
-        {/* File Actions Bar */}
+        {/* File Actions */}
         <div className="flex justify-between items-center mb-4">
+          <span className="bg-[#181818] text-sm font-medium px-3 py-1 rounded-full">
+            {branchName}
+          </span>
+
           <div className="flex items-center space-x-2">
-            <span className="bg-[#181818] text-sm font-medium px-3 py-1 rounded-full">{branchName}</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <button className="flex items-center gap-x-2 px-4 py-2 bg-green-600 rounded-md hover:bg-green-700 transition-colors">
-              <PlusIcon className="h-4 w-4" />
-              <span>Create File</span>
+            <button
+              className="flex items-center gap-x-2 px-4 py-2 bg-gray-700 rounded-md hover:bg-gray-600 transition-colors"
+              onClick={handleUploadButtonClick}
+            >
+              <UploadIcon className="h-4 w-4" />
+              <span>Upload Folder</span>
             </button>
-            <button className="flex items-center gap-x-2 px-4 py-2 bg-gray-700 rounded-md hover:bg-gray-600 transition-colors">
-              <PlayIcon className="h-4 w-4" />
-              <span>Upload File</span>
-            </button>
+
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleUploadFolder}
+              multiple
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-ignore
+              webkitdirectory="true"   // <-- Correct way for React/TSX
+              directory=""
+            />
           </div>
         </div>
 
-        {/* File List/Content */}
-        <div className="bg-[#181818] rounded-lg border border-gray-700 overflow-hidden">
-          {/* File Header Row */}
-          <div className="flex items-center px-4 py-2 border-b border-gray-700 font-semibold text-gray-400">
-            <div className="flex-1">Name</div>
-            <div className="w-1/3">Last commit</div>
-            <div className="w-1/6 text-right">Age</div>
-          </div>
-          {/* File List */}
-          {files.map((file, index) => (
-            <div key={index} className="flex items-center px-4 py-2 hover:bg-gray-700/50 transition-colors">
-              <div className="flex-1 flex items-center space-x-2">
-                {file.icon}
-                <span>{file.name}</span>
-              </div>
-              <div className="w-1/3 text-sm text-gray-400 truncate">
-                {file.lastCommit}
-              </div>
-              <div className="w-1/6 text-sm text-gray-400 text-right">
-                {file.age}
-              </div>
-            </div>
-          ))}
+        {/* File List */}
+        <div className="bg-[#181818] rounded-lg border border-gray-700 p-4">
+          {files.length > 0 ? (
+            renderFiles(files)
+          ) : (
+            <p className="text-gray-400">No files uploaded yet.</p>
+          )}
         </div>
-        
-        {/* README.md Section */}
-        <div className="mt-6 p-6 bg-[#181818] rounded-lg border border-gray-700 min-h-[200px] overflow-x-auto no-scrollbar">
-          {hasReadme ? (
+
+
+        {/* README.md */}
+        <div className="mt-6 p-6 bg-[#181818] rounded-lg border border-gray-700">
+          {readmeContent ? (
             <div>
               <h2 className="text-xl font-bold mb-4">README.md</h2>
               <div className="prose prose-invert max-w-none text-gray-300 break-words">
