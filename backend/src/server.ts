@@ -3,6 +3,7 @@ import http from "http";
 import { Server } from "socket.io";
 import cors from "cors";
 import "dotenv/config";
+import bodyparser from "body-parser";
 import authRoutes from "./modules/auth/auth.routes";
 import { errorHandler } from "./middlewares/errorHandler";
 import { registerSocketHandlers } from "./socket";
@@ -17,6 +18,7 @@ app.use(cors({
   origin: 'http://localhost:3000'
 }));
 app.use(express.json());
+app.use(bodyparser.json());
 
 // Health check
 app.get("/api/health", (req, res) => {

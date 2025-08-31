@@ -133,27 +133,24 @@ export const createFolderHandler = async (req: Request, res: Response) => {
   const { folderName, targetType } = req.body; // 'main' or 'branch'
 
   if (!folderName || !targetType) {
-    return res.status(400).json({ message: 'Folder name and target type are required' });
+    return res.status(400).json({ message: "Folder name and target type are required" });
   }
 
   try {
-    // --- Find the correct branch to add the folder to ---
+    // --- Find or create the correct branch ---
     let targetBranch;
 
-    if (targetType === 'main') {
-      // Find the main branch for this project
+    if (targetType === "main") {
+      // find the main branch
       targetBranch = await prisma.branch.findFirst({
-        where: {
-          projectId: parseInt(projectId),
-          isMain: true,
-        },
+        where: { projectId: parseInt(projectId), isMain: true },
       });
+
       if (!targetBranch) {
-        return res.status(404).json({ message: 'Main branch not found for this project' });
+        return res.status(404).json({ message: "Main branch not found for this project" });
       }
     } else {
-      // If the target is 'branch', we create a NEW branch.
-      // A "folder" in the "Branches" section is conceptually a new branch.
+      // creating a new branch if targetType === "branch"
       targetBranch = await prisma.branch.create({
         data: {
           name: folderName,
@@ -164,46 +161,52 @@ export const createFolderHandler = async (req: Request, res: Response) => {
       });
     }
 
-    // --- Create the FileNode record in the database ---
+    // --- Create folder entry in DB ---
     const newFolderNode = await prisma.fileNode.create({
       data: {
         name: folderName,
-        type: 'FOLDER', // Set the type explicitly
+        type: "FOLDER",
         branchId: targetBranch.id,
-        // parentId is null because this is a root folder in the branch for now
+        parentId: null, // root-level folder
       },
     });
 
-    // --- Create the physical folder on the server's file system ---
-    const branchPath = targetBranch.isMain ? 'main' : path.join('branches', `${targetBranch.id}_${targetBranch.name}`);
-    const fullPath = path.join(process.cwd(), 'workspaces', `project_${projectId}`, branchPath);
-    
-    // If it's the main branch, the new folder goes inside it.
-    // If it's a new branch, the branch folder itself is what we're creating.
-    const finalFolderPath = targetBranch.isMain ? path.join(fullPath, folderName) : fullPath;
-    
+    // --- Create folder in file system ---
+    const branchPath = targetBranch.isMain
+      ? "main"
+      : path.join("branches", `${targetBranch.id}_${targetBranch.name}`);
+
+    const fullBranchPath = path.join(
+      process.cwd(),
+      "workspaces",
+      `project_${projectId}`,
+      branchPath
+    );
+
+    // If main branch, create inside "main/folderName"
+    // If new branch, just create the branch folder
+    const finalFolderPath = targetBranch.isMain
+      ? path.join(fullBranchPath, folderName)
+      : fullBranchPath;
+
     await fs.mkdir(finalFolderPath, { recursive: true });
 
-    res.status(201).json({ 
-        message: 'Folder/Branch created successfully', 
-        data: newFolderNode 
-    });
+    // --- Fetch updated project tree ---
     const updatedProject = await prisma.project.findUnique({
       where: { id: parseInt(projectId) },
       include: {
-        branches: { include: { nodes: true } }
-      }
+        branches: { include: { nodes: true } },
+      },
     });
 
-    res.status(201).json({
-      message: 'Folder/Branch created successfully',
-      project: updatedProject
+    return res.status(201).json({
+      message: "Folder/Branch created successfully",
+      folder: newFolderNode,
+      project: updatedProject,
     });
-
   } catch (error) {
-    console.error('Failed to create folder/branch:', error);
-    res.status(500).json({ message: 'Internal server error' });
-    return;
+    console.error("Failed to create folder/branch:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
