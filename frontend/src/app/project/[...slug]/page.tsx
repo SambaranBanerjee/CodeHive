@@ -52,8 +52,8 @@ export default function ProjectFilePage({ params }: { params: { slug: string[] }
             {renderFiles(item.children, level + 1)}
           </div>
         ) : (
-          <div className="text-gray-300">
-            📄 {item.name} <span className="text-xs">({item.size} bytes)</span>
+          <div className="text-gray-300 flex items-center">
+            <CodeBracketIcon className="h-4 w-4" /> {item.name} <div className="text-xs">({item.size} bytes)</div>
           </div>
         )}
       </div>
