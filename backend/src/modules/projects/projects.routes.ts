@@ -42,6 +42,28 @@ router.post(
   }
 );
 
+router.post("/:projectId/create-file", authMiddleware, (req: Request, res: Response) => {
+  const { projectId } = req.params;
+  const { filePath, content } = req.body;
+
+  if (!filePath) {
+    return res.status(400).json({ error: "filePath is required" });
+  }
+
+  const fullPath = path.join("uploads", projectId, filePath);
+
+  try {
+    fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+    fs.writeFileSync(fullPath, content || "", "utf-8");
+
+    return res.status(200).json({ message: "File created successfully", filePath });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Failed to create file" });
+  }
+});
+
+
 
 router.get("/:projectId/files", authMiddleware, (req: Request, res: Response) => {
   const { projectId } = req.params;

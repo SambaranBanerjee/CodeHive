@@ -1,12 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useRef, useState, useEffect } from "react";
-import { HashtagIcon, PlusIcon, CodeBracketIcon } from "@heroicons/react/24/outline";
-import { UploadIcon } from "lucide-react";
+import React from "react";
+import { HashtagIcon, CodeBracketIcon } from "@heroicons/react/24/outline";
+import { UploadIcon, FilePlus } from "lucide-react";
 
-// This component will get the URL parameters as props
-export default function ProjectFilePage({ params }: { params: { slug: string[] } }) {
-  const { slug } = params;
+export default function ProjectFilePage({
+  params,
+}: {
+  params: Promise<{ slug: string[] }>;
+}) {
+  // ✅ unwrap params
+  const { slug } = React.use(params);
 
   const [projectId, branchName, ...folderPathParts] = slug;
   const folderPath = folderPathParts.join("/");
@@ -15,14 +20,18 @@ export default function ProjectFilePage({ params }: { params: { slug: string[] }
 
   type FileItem = {
     name: string;
-    lastCommit?: string;
-    age?: string;
+    type: string;
+    size?: number;
+    children?: FileItem[];
   };
 
   const [files, setFiles] = useState<FileItem[]>([]);
   const [readmeContent, setReadmeContent] = useState("");
-
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [showFileForm, setShowFileForm] = useState(false);
+  const [newFileName, setNewFileName] = useState("");
+  const [newFileContent, setNewFileContent] = useState("");
 
   const fetchFiles = async () => {
     const token = localStorage.getItem("token");
@@ -35,7 +44,6 @@ export default function ProjectFilePage({ params }: { params: { slug: string[] }
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
       const data = await response.json();
       setFiles(data.files);
     } catch (error) {
@@ -49,29 +57,30 @@ export default function ProjectFilePage({ params }: { params: { slug: string[] }
         {item.type === "folder" ? (
           <div className="font-semibold text-blue-400">
             📁 {item.name}
-            {renderFiles(item.children, level + 1)}
+            {renderFiles(item.children || [], level + 1)}
           </div>
         ) : (
           <div className="text-gray-300 flex items-center">
-            <CodeBracketIcon className="h-4 w-4" /> {item.name} <div className="text-xs">({item.size} bytes)</div>
+            <CodeBracketIcon className="h-4 w-4" /> {item.name}{" "}
+            <div className="text-xs">({item.size} bytes)</div>
           </div>
         )}
       </div>
     ));
   };
 
-
   useEffect(() => {
     fetchFiles();
   }, [projectId, branchName, folderPath]);
 
+  // Upload folder
   const handleUploadFolder = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
     if (!selectedFiles || selectedFiles.length === 0) return;
 
     const formData = new FormData();
     for (const file of Array.from(selectedFiles)) {
-      formData.append("files", file, ((file as File).webkitRelativePath || file.name));
+      formData.append("files", file, (file as File).webkitRelativePath || file.name);
     }
 
     const token = localStorage.getItem("token");
@@ -105,6 +114,44 @@ export default function ProjectFilePage({ params }: { params: { slug: string[] }
     fileInputRef.current?.click();
   };
 
+  // ✅ Create File
+  const handleCreateFile = async () => {
+    if (!newFileName) {
+      alert("Please enter a file name");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/projects/${projectId}/create-file`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            filePath: folderPath ? `${folderPath}/${newFileName}` : newFileName,
+            content: newFileContent || "",
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to create file");
+
+      console.log("✅ File created!");
+      setShowFileForm(false);
+      setNewFileName("");
+      setNewFileContent("");
+      fetchFiles();
+    } catch (error) {
+      console.error("File creation failed:", error);
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col bg-[#101010] text-white">
       {/* Top Bar */}
@@ -124,6 +171,7 @@ export default function ProjectFilePage({ params }: { params: { slug: string[] }
           </span>
 
           <div className="flex items-center space-x-2">
+            {/* Upload Folder */}
             <button
               className="flex items-center gap-x-2 px-4 py-2 bg-gray-700 rounded-md hover:bg-gray-600 transition-colors"
               onClick={handleUploadButtonClick}
@@ -131,7 +179,6 @@ export default function ProjectFilePage({ params }: { params: { slug: string[] }
               <UploadIcon className="h-4 w-4" />
               <span>Upload Folder</span>
             </button>
-
             <input
               type="file"
               ref={fileInputRef}
@@ -139,11 +186,47 @@ export default function ProjectFilePage({ params }: { params: { slug: string[] }
               multiple
               // eslint-disable-next-line @typescript-eslint/ban-ts-comment
               // @ts-ignore
-              webkitdirectory="true"   // <-- Correct way for React/TSX
+              webkitdirectory="true"
               directory=""
+              style={{ display: "none" }}
             />
+
+            {/* ✅ Create File */}
+            <button
+              className="flex items-center gap-x-2 px-4 py-2 bg-blue-700 rounded-md hover:bg-blue-600 transition-colors"
+              onClick={() => setShowFileForm(!showFileForm)}
+            >
+              <FilePlus className="h-4 w-4" />
+              <span>New File</span>
+            </button>
           </div>
         </div>
+
+        {/* Create File Form */}
+        {showFileForm && (
+          <div className="mb-4 p-4 bg-[#181818] border border-gray-700 rounded-lg">
+            <input
+              type="text"
+              placeholder="File name (e.g. index.js)"
+              value={newFileName}
+              onChange={(e) => setNewFileName(e.target.value)}
+              className="w-full mb-2 p-2 rounded bg-gray-900 text-white border border-gray-700"
+            />
+            <textarea
+              placeholder="File content..."
+              value={newFileContent}
+              onChange={(e) => setNewFileContent(e.target.value)}
+              className="w-full mb-2 p-2 rounded bg-gray-900 text-white border border-gray-700"
+              rows={6}
+            />
+            <button
+              onClick={handleCreateFile}
+              className="px-4 py-2 bg-green-700 rounded hover:bg-green-600"
+            >
+              Create
+            </button>
+          </div>
+        )}
 
         {/* File List */}
         <div className="bg-[#181818] rounded-lg border border-gray-700 p-4">
@@ -151,26 +234,6 @@ export default function ProjectFilePage({ params }: { params: { slug: string[] }
             renderFiles(files)
           ) : (
             <p className="text-gray-400">No files uploaded yet.</p>
-          )}
-        </div>
-
-
-        {/* README.md */}
-        <div className="mt-6 p-6 bg-[#181818] rounded-lg border border-gray-700">
-          {readmeContent ? (
-            <div>
-              <h2 className="text-xl font-bold mb-4">README.md</h2>
-              <div className="prose prose-invert max-w-none text-gray-300 break-words">
-                <pre><code>{readmeContent}</code></pre>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center">
-              <p className="text-gray-400 mb-4">No README.md found in this folder.</p>
-              <button className="bg-blue-600 px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
-                Add README.md
-              </button>
-            </div>
           )}
         </div>
       </main>
