@@ -72,24 +72,20 @@ router.get("/:projectId/files", authMiddleware, (req: Request, res: Response) =>
   const projectDir = path.join("uploads", projectId);
 
   if (!fs.existsSync(projectDir)) {
-    return res.json({ files: [] }); // No files uploaded yet
+    return res.json({ files: [] });
   }
 
-  // Recursive helper to build file tree
-  const readDir = (dir: string): any[] => {
-    return fs.readdirSync(dir).map((file) => {
+  // Flatten files (no folders)
+  const readFiles = (dir: string): any[] => {
+    return fs.readdirSync(dir).flatMap((file) => {
       const filePath = path.join(dir, file);
       const stats = fs.statSync(filePath);
 
       if (stats.isDirectory()) {
-        return {
-          name: file,
-          type: "folder",
-          children: readDir(filePath),
-        };
+        return readFiles(filePath); // go deeper but don't include folder itself
       } else {
         return {
-          name: file,
+          name: file, // ✅ only file name, no parent folder
           type: "file",
           size: stats.size,
           modified: stats.mtime,
@@ -98,9 +94,10 @@ router.get("/:projectId/files", authMiddleware, (req: Request, res: Response) =>
     });
   };
 
-  const fileTree = readDir(projectDir);
-  res.json({ files: fileTree });
+  const files = readFiles(projectDir);
+  res.json({ files });
 });
+
 
 
 export default router;

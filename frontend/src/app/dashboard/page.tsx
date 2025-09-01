@@ -320,7 +320,7 @@ function ProjectContentArea({ project }: { project: Project }) {
                         <a href="#" className="flex items-center gap-x-4 p-3 bg-[#181818] rounded-md border border-gray-700 hover:border-gray-500">
                           <FolderIcon className="h-6 w-6 text-green-400"/>
                           <div>
-                            <h4 className="font-semibold">Create your first folder</h4>
+                            <h4 className="font-semibold">Create a new folder</h4>
                             <p className="text-sm text-gray-400">Organize your code files into main or branch folders.</p>
                           </div>
                         </a>

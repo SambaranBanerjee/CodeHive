@@ -60,10 +60,9 @@ export default function ProjectFilePage({
             {renderFiles(item.children || [], level + 1)}
           </div>
         ) : (
-          <div className="text-gray-300 flex items-center">
-            <CodeBracketIcon className="h-4 w-4" /> {item.name}{" "}
-            <div className="text-xs">({item.size} bytes)</div>
-          </div>
+          <div className="text-gray-300 flex items-center gap-3">
+            <CodeBracketIcon className="h-5 w-5" /> {item.name}{" "}
+          </div>  
         )}
       </div>
     ));
